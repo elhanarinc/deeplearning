@@ -41,9 +41,9 @@ def svm_loss_naive(W, X, y, reg):
       if margin > 0:
         loss += margin
         # Increase the correct one's gradient, since there is margin clearly y[i] is not the correct class
-        dW[j] = dW[j] + X_at_i.T
+        dW[j, :] = dW[j, :] + X_at_i.T
         # Decrease the incorrect one's gradient
-        dW[y[i]] = dW[y[i]] - X_at_i.T
+        dW[y[i], :] = dW[y[i], :] - X_at_i.T
 
   # Right now the loss is a sum over all training examples, but we want it
   # to be an average instead so we divide by num_train.
