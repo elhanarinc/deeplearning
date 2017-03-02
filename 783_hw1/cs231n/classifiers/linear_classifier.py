@@ -93,7 +93,7 @@ class LinearClassifier:
     # Implement this method. Store the predicted labels in y_pred.            #
     ###########################################################################
     scores = np.dot(self.W, X)
-    y_pred = scores.argsort(axis = 0)[9,:]
+    y_pred = scores.argsort(axis = 0)[-1,:]
     ###########################################################################
     #                           END OF YOUR CODE                              #
     ###########################################################################
