@@ -32,7 +32,7 @@ def two_layer_convnet(X, model, y=None, reg=0.0):
   - grads: Dictionary with the same keys as model, mapping parameter names to
     their gradients.
   """
-  
+
   # Unpack weights
   W1, b1, W2, b2 = model['W1'], model['b1'], model['W2'], model['b2']
   N, C, H, W = X.shape
@@ -68,7 +68,7 @@ def two_layer_convnet(X, model, y=None, reg=0.0):
 
   loss = data_loss + reg_loss
   grads = {'W1': dW1, 'b1': db1, 'W2': dW2, 'b2': db2}
-  
+
   return loss, grads
 
 

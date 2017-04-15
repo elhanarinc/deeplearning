@@ -129,9 +129,9 @@ class DenoisingAutoencoder(object):
         # ############################################################################
 
         # ############################################################################
-        # TODO: Compute the loss. This should include             #
-        #             (i) the data loss (square error loss),          #
-        #             (ii) L2 regularization for W1 and W2, and           #
+        # TODO: Compute the loss. This should include                               #
+        #             (i) the data loss (square error loss),                        #
+        #             (ii) L2 regularization for W1 and W2, and                     #
         # Store the result in the variable loss, which should be a scalar.          #
         # (Don't forget to investigate the effect of L2 loss)                       #
         # ############################################################################
