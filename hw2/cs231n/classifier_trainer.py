@@ -6,8 +6,8 @@ class ClassifierTrainer(object):
   def __init__(self):
     self.step_cache = {} # for storing velocities in momentum update
 
-  def train(self, X, y, X_val, y_val, 
-            model, loss_function, 
+  def train(self, X, y, X_val, y_val,
+            model, loss_function,
             reg=0.0,
             learning_rate=1e-2, momentum=0, learning_rate_decay=0.95,
             update='momentum', sample_batches=True,
@@ -58,7 +58,10 @@ class ClassifierTrainer(object):
       iterations_per_epoch = N / batch_size # using SGD
     else:
       iterations_per_epoch = 1 # using GD
+    # print N
+    # print iterations_per_epoch
     num_iters = num_epochs * iterations_per_epoch
+    # print num_iters
     epoch = 0
     best_val_acc = 0.0
     best_model = {}
@@ -91,7 +94,7 @@ class ClassifierTrainer(object):
           dx = -learning_rate * grads[p]
 
         elif update == 'momentum':
-          if not p in self.step_cache: 
+          if not p in self.step_cache:
             self.step_cache[p] = np.zeros(grads[p].shape)
 
           #####################################################################
@@ -102,7 +105,7 @@ class ClassifierTrainer(object):
 
         elif update == 'rmsprop':
           decay_rate = 0.99 # you could also make this an option TODO
-          if not p in self.step_cache: 
+          if not p in self.step_cache:
             self.step_cache[p] = np.zeros(grads[p].shape)
           dx = np.zeros_like(grads[p]) # you can remove this after
           #####################################################################
@@ -145,7 +148,7 @@ class ClassifierTrainer(object):
         y_pred_val = np.argmax(scores_val, axis=1)
         val_acc = np.mean(y_pred_val ==  y_val)
         val_acc_history.append(val_acc)
-        
+
         # keep track of the best model based on validation accuracy
         if val_acc > best_val_acc:
           # make a copy of the model
