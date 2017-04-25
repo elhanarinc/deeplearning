@@ -164,8 +164,8 @@ class DenoisingAutoencoder(object):
         grads[1]['W'] = s_layer_error / number_of_training + reg * W1
         grads[0]['W'] = f_layer_error / number_of_training + reg * W0
 
-        grads[1]['b'] = np.sum(s_layer_delta / number_of_training, axis=0)
-        grads[0]['b'] = np.sum(f_layer_delta / number_of_training, axis=0)
+        grads[1]['b'] = np.sum(s_layer_delta / number_of_training, axis = 0)
+        grads[0]['b'] = np.sum(f_layer_delta / number_of_training, axis = 0)
 
         # ############################################################################
         #                              END OF YOUR CODE                             #
