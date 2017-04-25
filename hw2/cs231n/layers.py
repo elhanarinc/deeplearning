@@ -218,7 +218,7 @@ def conv_backward_naive(dout, cache):
                     db[j] += current_derivative
                     dw[j] += current_field * current_derivative
 
-                    dx_padded[i, :, hs:hss, ws:wss] += w[j] * dout[i, j, k, l]
+                    dx_padded[i, :, hs:hss, ws:wss] += w[j] * current_derivative
 
 
     dx = dx_padded[:, :, pad:pad + H, pad:pad + W]
