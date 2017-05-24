@@ -250,19 +250,32 @@ class CaptioningRNN(object):
     h0, _ = affine_forward(features, W_proj, b_proj)
 
     current_word = self._start * np.ones((N, 1), dtype = np.int32)
-    for t in xrange(max_length):
+
+    # Add start symbol to start of the sentence
+    captions[:,0] = self._start
+
+    for t in xrange(1, max_length):
         word_out, _ = word_embedding_forward(current_word, W_embed)
+
+        # word_out 2,1,256 and we need to delete second dimension in order to multiply
         word_out = np.squeeze(word_out, axis = 1)
 
         if self.cell_type == 'rnn':
             h0, _ = rnn_step_forward(word_out, h0, Wx, Wh, b)
 
+        # We need to expand the dimension previously deleted with np.squeeze
         scores, _ = temporal_affine_forward(np.expand_dims(h0, axis = 1), W_vocab, b_vocab)
 
-        temp_word = np.argmax(scores, axis = 2)
+        # we need to flatten the scores for word, escaping from Timeseries dimension
+        scores = scores.reshape(scores.shape[0] * scores.shape[1], scores.shape[2])
 
-        current_word = temp_word
-        captions[:,t] = np.squeeze(temp_word)
+        # find the max of scores
+        current_word = np.argmax(scores, axis = 1)
+        captions[:,t] = current_word
+
+        # Add 1 time series for current word in order to pass word_embedding
+        current_word = np.expand_dims(current_word, axis = 1)
+
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
