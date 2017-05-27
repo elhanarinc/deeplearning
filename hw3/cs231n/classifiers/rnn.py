@@ -151,7 +151,9 @@ class CaptioningRNN(object):
     # 3 First time its RNN
     if self.cell_type == 'rnn':
         # hidden to hidden
-        h, cache_rnn = rnn_forward(word_out, h0, Wx, Wh, b)
+        h, cache_rnn_lstm = rnn_forward(word_out, h0, Wx, Wh, b)
+    else:
+        h, cache_rnn_lstm = lstm_forward(word_out, h0, Wx, Wh, b)
 
     # 4 Use again rnn_layers and temporal affine forward
     # Hidden to vocab
@@ -169,10 +171,12 @@ class CaptioningRNN(object):
     # RNN backward
     if self.cell_type == 'rnn':
         # def rnn_backward(dh, cache): return dx, dh0, dWx, dWh, db
-        dx_rnn, dh0, dWx, dWh, db = rnn_backward(dx_aff_temp, cache_rnn)
+        dx_rnn_lstm, dh0, dWx, dWh, db = rnn_backward(dx_aff_temp, cache_rnn_lstm)
+    else:
+        dx_rnn_lstm, dh0, dWx, dWh, db = lstm_backward(dx_aff_temp, cache_rnn_lstm)
 
     # Word embedding backward
-    dW_embedded = word_embedding_backward(dx_rnn, cache_embedded)
+    dW_embedded = word_embedding_backward(dx_rnn_lstm, cache_embedded)
 
     # Affine backward this time, finally
     dx_aff, dw_aff, db_aff = affine_backward(dh0, cache0)
@@ -248,6 +252,7 @@ class CaptioningRNN(object):
     # a loop.                                                                 #
     ###########################################################################
     h0, _ = affine_forward(features, W_proj, b_proj)
+    c0 = np.zeros_like(h0)
 
     current_word = self._start * np.ones((N, 1), dtype = np.int32)
 
@@ -258,10 +263,12 @@ class CaptioningRNN(object):
         word_out, _ = word_embedding_forward(current_word, W_embed)
 
         # word_out 2,1,256 and we need to delete second dimension in order to multiply
-        word_out = np.squeeze(word_out, axis = 1)
+        word_out_flatten = word_out.reshape(word_out.shape[0] * word_out.shape[1], word_out.shape[2])
 
         if self.cell_type == 'rnn':
-            h0, _ = rnn_step_forward(word_out, h0, Wx, Wh, b)
+            h0, _ = rnn_step_forward(word_out_flatten, h0, Wx, Wh, b)
+        else:
+            h0, c0, _ = lstm_step_forward(word_out_flatten, h0, c0, Wx, Wh, b)
 
         # We need to expand the dimension previously deleted with np.squeeze
         scores, _ = temporal_affine_forward(np.expand_dims(h0, axis = 1), W_vocab, b_vocab)

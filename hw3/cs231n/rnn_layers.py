@@ -177,7 +177,6 @@ def rnn_backward(dh, cache):
     db += current_db
 
     dh0 = current_dh0
-
   ##############################################################################
   #                               END OF YOUR CODE                             #
   ##############################################################################
@@ -292,7 +291,31 @@ def lstm_step_forward(x, prev_h, prev_c, Wx, Wh, b):
   # TODO: Implement the forward pass for a single timestep of an LSTM.        #
   # You may want to use the numerically stable sigmoid implementation above.  #
   #############################################################################
-  pass
+  N, D = x.shape
+  N, H = prev_h.shape
+
+  next_h = np.zeros((N, H))
+  next_c = np.zeros((N, H))
+
+  input_part = np.dot(x, Wx)
+  hidden_part = np.dot(prev_h, Wh)
+
+  activation = input_part + hidden_part + b
+
+  a_i = activation[:, 0 : H]
+  a_f = activation[:, H : 2 * H]
+  a_o = activation[:, 2 * H : 3 * H]
+  a_g = activation[:, 3 * H :]
+
+  i = sigmoid(a_i)
+  f = sigmoid(a_f)
+  o = sigmoid(a_o)
+  g = np.tanh(a_g)
+
+  next_c = f * prev_c + i * g
+  next_h = o * np.tanh(next_c)
+
+  cache = (x, Wx, prev_h, Wh, b, i, f, o, g, prev_c, next_c, next_h)
   ##############################################################################
   #                               END OF YOUR CODE                             #
   ##############################################################################
@@ -324,7 +347,38 @@ def lstm_step_backward(dnext_h, dnext_c, cache):
   # HINT: For sigmoid and tanh you can compute local derivatives in terms of  #
   # the output value from the nonlinearity.                                   #
   #############################################################################
-  pass
+  (x, Wx, prev_h, Wh, b, i, f, o, g, prev_c, next_c, next_h) = cache
+
+  # i = input gate
+  # f = forget gate
+  # o = output gate
+  # g = block input gate
+
+  # next_c = f * prev_c + i * g
+  # next_h = o * np.tanh(next_c)
+
+  # https://arunmallya.github.io/writeups/nn/lstm/index.html#/8
+  # https://arunmallya.github.io/writeups/nn/lstm/index.html#/9
+  do = dnext_h * np.tanh(next_c)
+  dnext_c += dnext_h * o * (1 - np.tanh(next_c) * np.tanh(next_c))
+
+  di = dnext_c * g
+  df = dnext_c * prev_c
+  dg = dnext_c * i
+  dprev_c = dnext_c * f
+
+  dzi = di * i * (1 - i)
+  dzf = df * f * (1 - f)
+  dzo = do * o * (1 - o)
+  dzg = dg * (1 - g * g)
+
+  dz = np.hstack([dzi, dzf, dzo, dzg])
+
+  dx = np.dot(dz, Wx.T)
+  dWx = np.dot(x.T, dz)
+  dprev_h = np.dot(dz, Wh.T)
+  dWh = np.dot(prev_h.T, dz)
+  db = np.sum(dz, axis = 0)
   ##############################################################################
   #                               END OF YOUR CODE                             #
   ##############################################################################
@@ -359,7 +413,23 @@ def lstm_forward(x, h0, Wx, Wh, b):
   # TODO: Implement the forward pass for an LSTM over an entire timeseries.   #
   # You should use the lstm_step_forward function that you just defined.      #
   #############################################################################
-  pass
+  (N, T, D) = x.shape
+  (N, H) = h0.shape
+
+  c0 = np.zeros_like(h0)
+
+  h = np.zeros((N, T, H))
+  cache = []
+
+  for i in xrange(T):
+    current_x = x[:, i, :]
+    current_next_h, current_next_c, current_cache = lstm_step_forward(current_x, h0, c0, Wx, Wh, b)
+
+    h[:, i, :] = current_next_h
+    h0 = current_next_h
+    c0 = current_next_c
+
+    cache.append(current_cache)
   ##############################################################################
   #                               END OF YOUR CODE                             #
   ##############################################################################
@@ -387,7 +457,30 @@ def lstm_backward(dh, cache):
   # TODO: Implement the backward pass for an LSTM over an entire timeseries.  #
   # You should use the lstm_step_backward function that you just defined.     #
   #############################################################################
-  pass
+  # cache = (x, Wx, prev_h, Wh, b, i, f, o, g, prev_c, next_c, next_h)
+  (N, T, H) = dh.shape
+  D = cache[0][0].shape[1]
+
+  dx = np.zeros((N, T, D))
+  dh0 = np.zeros((N, H))
+  dc0 = np.zeros_like(dh0)
+  dWx = np.zeros((D, H * 4))
+  dWh = np.zeros((H, H * 4))
+  db = np.zeros((H * 4))
+
+  for i in xrange(1, T + 1):
+    index = T - i
+
+    current_dh = dh[:, index, :]
+    current_dx, current_dh0, current_dc0, current_dWx, current_dWh, current_db = lstm_step_backward(dh0 + current_dh, dc0, cache[index])
+
+    dx[:, index, :] = current_dx
+    dWx += current_dWx
+    dWh += current_dWh
+    db += current_db
+
+    dh0 = current_dh0
+    dc0 = current_dc0
   ##############################################################################
   #                               END OF YOUR CODE                             #
   ##############################################################################
